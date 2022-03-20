@@ -2,16 +2,15 @@
 #ifndef OBJECT3D_H
 #define OBJECT3D_H
 #include <windows.h>
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include <ctime>
 #include "Matrix.h"
 class Object3D {
 private:
 	std::vector <Matrix<float>> vertexes_;
 	std::vector <std::vector<int>> faces_;
+
 
 public:
 	COLORREF color_faces_ = 0x00a5ff;

@@ -13,13 +13,14 @@ public:
 	int WidthWndClass = 1600, HeightWndClass = 800;
 
 	void createObjects() {
-		Camera camera(WidthWndClass, HeightWndClass, { 0, 0, 10 });
+		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 10 });
 		Camera camera2(WidthWndClass, HeightWndClass, { 0, 0, 10 });
-		cameras_.push_back(camera);
+		cameras_.push_back(camera1);
 		cameras_.push_back(camera2);
-		Object3D object("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\cube.obj");
-		objects_.push_back(object);
-		objects_.resize(5);
+		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\cube.obj");
+		Object3D object2("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\ball.obj");
+		//objects_.push_back(object1);
+		objects_.push_back(object2);
 	}
 	void show(HDC hdc) {
 		for (size_t i = 0; i < objects_.size(); i++)
