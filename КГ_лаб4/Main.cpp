@@ -3,46 +3,76 @@
 #include <chrono>
 #include <iostream>
 
-char szClassName[] = "CG_WAPI_Template";
-const int WidthWndClass = 1600, HeightWndClass = 800;
-Camera camera(WidthWndClass, HeightWndClass, { 0, 0, 10 });
-Object3D object;
+class Scene {
+private:
+	std::vector <Camera> cameras_;
+	std::vector <Object3D> objects_;
+	int action_object_ = 0, action_camera_ = 0;
 
-void control(WPARAM key) {
-	float translate_speed = 0.05f;
-	float rotate_speed = 2;
-	float scale_speed = 0.01f;
-	if (GetKeyState(VK_SHIFT) & 0x8000) {
-		if (key == int('E')) object.rotate(0, 0,  rotate_speed);
-		if (key == int('Q')) object.rotate(0, 0, -rotate_speed);
-		if (key == int('W')) object.rotate( rotate_speed, 0, 0);
-		if (key == int('S')) object.rotate(-rotate_speed, 0, 0);
-		if (key == int('D')) object.rotate(0,  rotate_speed, 0);
-		if (key == int('A')) object.rotate(0, -rotate_speed, 0);
+public:
+	int WidthWndClass = 1600, HeightWndClass = 800;
+
+	void createObjects() {
+		Camera camera(WidthWndClass, HeightWndClass, { 0, 0, 10 });
+		Camera camera2(WidthWndClass, HeightWndClass, { 0, 0, 10 });
+		cameras_.push_back(camera);
+		cameras_.push_back(camera2);
+		Object3D object("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\cube.obj");
+		objects_.push_back(object);
+		objects_.resize(5);
 	}
-	else if (GetKeyState(VK_CONTROL) & 0x8000) {
-		if (key == int('E')) object.scale(1, 1, scale_speed);
-		if (key == int('Q')) object.scale(1, 1, -scale_speed);
-		if (key == int('W')) object.scale(1 + scale_speed, 1, 1);
-		if (key == int('S')) object.scale(1 - scale_speed, 1, 1);
-		if (key == int('D')) object.scale(1, scale_speed, 1);
-		if (key == int('A')) object.scale(1, 1 - scale_speed, 1);
+	void show(HDC hdc) {
+		for (size_t i = 0; i < objects_.size(); i++)
+			objects_[i].draw(cameras_[action_camera_], hdc);
 	}
-	else {
-		if (key == int('E')) object.translate(0, 0, translate_speed);
-		if (key == int('Q')) object.translate(0, 0, -translate_speed);
-		if (key == int('W')) object.translate(translate_speed, 0, 0);
-		if (key == int('S')) object.translate(-translate_speed, 0, 0);
-		if (key == int('D')) object.translate(0, translate_speed, 0);
-		if (key == int('A')) object.translate(0, -translate_speed, 0);
+	void control(WPARAM key) {
+		float translate_speed = 0.05f;
+		float rotate_speed = 0.5f;
+		float scale_speed = 0.01f;
+		if (GetKeyState(VK_SHIFT) & 0x8000) {
+			if (key == int('E')) objects_[action_object_].rotate(0, 0, rotate_speed);
+			if (key == int('Q')) objects_[action_object_].rotate(0, 0, -rotate_speed);
+			if (key == int('W')) objects_[action_object_].rotate(rotate_speed, 0, 0);
+			if (key == int('S')) objects_[action_object_].rotate(-rotate_speed, 0, 0);
+			if (key == int('D')) objects_[action_object_].rotate(0, rotate_speed, 0);
+			if (key == int('A')) objects_[action_object_].rotate(0, -rotate_speed, 0);
+		}
+		else if (GetKeyState(VK_CONTROL) & 0x8000) {
+			if (key == int('E')) objects_[action_object_].scale(1, 1, 1 + scale_speed);
+			if (key == int('Q')) objects_[action_object_].scale(1, 1, 1 - scale_speed);
+			if (key == int('W')) objects_[action_object_].scale(1 + scale_speed, 1, 1);
+			if (key == int('S')) objects_[action_object_].scale(1 - scale_speed, 1, 1);
+			if (key == int('D')) objects_[action_object_].scale(1, 1 + scale_speed, 1);
+			if (key == int('A')) objects_[action_object_].scale(1, 1 - scale_speed, 1);
+		}
+		else {
+			if (key == int('O')) action_object_ == objects_.size() - 1 ? action_object_ = 0 : action_object_++;
+			if (key == int('C')) action_camera_ == cameras_.size() - 1 ? action_camera_ = 0 : action_camera_++;
+
+			if (key == int('E')) objects_[action_object_].translate(0, 0, translate_speed);
+			if (key == int('Q')) objects_[action_object_].translate(0, 0, -translate_speed);
+			if (key == int('W')) objects_[action_object_].translate(translate_speed, 0, 0);
+			if (key == int('S')) objects_[action_object_].translate(-translate_speed, 0, 0);
+			if (key == int('D')) objects_[action_object_].translate(0, translate_speed, 0);
+			if (key == int('A')) objects_[action_object_].translate(0, -translate_speed, 0);
+		}
+		if (key == 105) cameras_[action_camera_].translate(0, 0, translate_speed);
+		if (key == 103) cameras_[action_camera_].translate(0, 0, -translate_speed);
+		if (key == 101) cameras_[action_camera_].translate(translate_speed, 0, 0);
+		if (key == 104) cameras_[action_camera_].translate(-translate_speed, 0, 0);
+		if (key == 100) cameras_[action_camera_].translate(0, translate_speed, 0);
+		if (key == 102) cameras_[action_camera_].translate(0, -translate_speed, 0);
+
+		if (key == 39) cameras_[action_camera_].rotate(0, rotate_speed, 0);
+		if (key == 37) cameras_[action_camera_].rotate(0, -rotate_speed, 0);
+		if (key == 40) cameras_[action_camera_].rotate(rotate_speed, 0, 0);
+		if (key == 38) cameras_[action_camera_].rotate(-rotate_speed, 0, 0);
 	}
-	if (key == 105) camera.translate(0, 0, translate_speed);
-	if (key == 103) camera.translate(0, 0, -translate_speed);
-	if (key == 101) camera.translate(translate_speed, 0, 0);
-	if (key == 104) camera.translate(-translate_speed, 0, 0);
-	if (key == 100) camera.translate(0, translate_speed, 0);
-	if (key == 102) camera.translate(0, -translate_speed, 0);
-}
+	void movement() {
+
+	}
+} scene;
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT ps; RECT Rect; HDC hdc, hCmpDC; HBITMAP hBmp;
@@ -61,14 +91,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 		// Закраска фоновым цветом
 		LOGBRUSH br;
 		br.lbStyle = BS_SOLID;
-		br.lbColor = 0x282828;
+		br.lbColor = 0x202020;
 		HBRUSH brush;
 		brush = CreateBrushIndirect(&br);
 		FillRect(hCmpDC, &Rect, brush);
 		DeleteObject(brush);
 
 		// Отрисовка
-		object.draw(camera, hCmpDC);
+		scene.show(hCmpDC);
 
 		// Копируем изображение из теневого контекста на экран
 		SetStretchBltMode(hdc, COLORONCOLOR);
@@ -87,7 +117,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 		break;
 
 	case WM_KEYDOWN:
-		control(wParam);
+		scene.control(wParam);
 		break;
 
 	case WM_DESTROY:
@@ -97,7 +127,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 	default:
 		return (DefWindowProc(hWnd, messg, wParam, lParam));
 	}
-	//camera.movement();
+	scene.movement();
 	InvalidateRect(hWnd, NULL, TRUE);
 	return (0);
 }
@@ -105,6 +135,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	HWND hWnd;
 	MSG lpMsg;
 	WNDCLASS WndClass;
+
+	scene.createObjects();
 
 	// Заполняем структуру класса окна
 	WndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -116,7 +148,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	WndClass.hCursor = LoadCursor(NULL, IDC_CROSS);
 	WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	WndClass.lpszMenuName = NULL;
-	WndClass.lpszClassName = (LPCWSTR)szClassName;
+	WndClass.lpszClassName = L"CG_WAPI_Template";
 
 	// Регистрируем класс окна
 	if (!RegisterClass(&WndClass)) {
@@ -126,11 +158,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	// Создаем основное окно приложения
 	hWnd = CreateWindow(
-		(LPCWSTR)szClassName, // Имя класса 
+		L"CG_WAPI_Template", // Имя класса 
 		L"Компьютерная графика лабораторная работа №1", // Текст заголовка
 		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, // Стиль окна 
 		-12, 0, // Позиция левого верхнего угла 
-		WidthWndClass, HeightWndClass, // Ширина и высота окна 
+		scene.WidthWndClass, scene.HeightWndClass, // Ширина и высота окна 
 		(HWND)NULL, // Указатель на родительское окно NULL 
 		(HMENU)NULL, // Используется меню класса окна 
 		(HINSTANCE)hInstance, // Указатель на текущее приложение

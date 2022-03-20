@@ -3,6 +3,7 @@
 #define OBJECT3D_H
 #include <windows.h>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <ctime>
@@ -10,10 +11,9 @@
 class Object3D {
 private:
 	std::vector <Matrix<float>> vertexes_;
-	std::vector <std::vector<float>> faces_;
+	std::vector <std::vector<int>> faces_;
 
 public:
-	bool movementPlay = false, drawVertexes = true;
 	COLORREF color_faces_ = 0x00a5ff;
 
 	Object3D() {
@@ -28,7 +28,10 @@ public:
 		}
 		faces_ = { {0, 1, 2, 3}, {4, 5, 6, 7}, {0, 4, 5, 1}, {2, 3, 7, 6}, {1, 2, 6, 5}, {0, 3, 7, 4} };
 	}
-	Object3D(std::vector<std::vector<float>> vertexes, std::vector <std::vector<float>> faces) {
+	Object3D(const char* filename) {
+		LoadObjModel(filename);
+	}
+	Object3D(std::vector<std::vector<float>> vertexes, std::vector <std::vector<int>> faces) {
 		vertexes_.resize(vertexes.size());
 		for (size_t i = 0; i < vertexes.size(); i++) {
 			vertexes[i].push_back(1);
@@ -37,7 +40,7 @@ public:
 		faces_ = faces;
 	}
 
-	void vertexesAndFaces(std::vector<std::vector<float>> vertexes, std::vector <std::vector<float>> faces) {
+	void vertexesAndFaces(std::vector<std::vector<float>> vertexes, std::vector <std::vector<int>> faces) {
 		vertexes_.clear(), faces_.clear();
 		vertexes_.resize(vertexes.size());
 		for (size_t i = 0; i < vertexes.size(); i++) {
@@ -46,44 +49,33 @@ public:
 		}
 		faces_ = faces;
 	}
-	/*void LoadObjModel(const char* filename) {
+	void LoadObjModel(const char* filename) {
+		vertexes_.clear(), faces_.clear();
 		std::ifstream in(filename, std::ios::in);
 		if (!in) exit(1);
 		std::string line;
-		while (std::getline(in, line)) {
+		while (getline(in, line)) {
 			if (line.substr(0, 2) == "v ") {
 				std::istringstream v(line.substr(2));
-				Matrix <float> vertex(1, 4);
-				v >> vertex(0, 0) >> vertex(0, 1) >> vertex(0, 2);
+				float x, y, z;
+				v >> x >> y >> z;
+				Matrix <float> vertex({ {x, y, z, 1 } });
 				vertexes_.push_back(vertex);
 			}
 			else if (line.substr(0, 2) == "f ") {
-				int a, b, c;
-				int A, B, C;
-				const char* chh = line.c_str();
-				sscanf(chh, "f %i/%i %i/%i %i/%i", &a, &A, &b, &B, &c, &C);
-				a--; b--; c--;
-				faceIndex.push_back(a);
-				faceIndex.push_back(b);
-				faceIndex.push_back(c);
+				faces_.resize(faces_.size() + 1);
+				std::istringstream v(line.substr(2));
+				std::string subline;
+				while (v >> subline) {
+					subline = subline.substr(0, subline.find("/"));
+					faces_.back().push_back(atoi(subline.c_str()) - 1);
+				}
 			}
-
 		}
-	}*/
+		in.close();
+	}
 
 	void draw(Camera camera, HDC hdc) {
-		screenProjection(camera, hdc);
-		movement();
-	}
-	void movement() {
-		srand((unsigned int)time(NULL));
-		if (movementPlay) {
-			rotate((float)(rand() % 51 - 25) / 100, (float)(rand() % 51 - 25) / 100, (float)(rand() % 51 - 25) / 100);
-			float value = 1.0f + (float)(rand() % 5 - 2) / 1000;
-			scale(value, value, value);
-		}
-	}
-	void screenProjection(Camera camera, HDC hdc) {
 		for (size_t i = 0; i < faces_.size(); i++) {
 			std::vector<Matrix<float>> face(faces_[i].size());
 			for (size_t j = 0; j < face.size(); j++) {
@@ -92,7 +84,8 @@ public:
 				face[j] = face[j] * camera.cameraMatrix() * camera.projectionMatrix();
 				for (size_t g = 0; g < 4; g++) {
 					// нормализация вершин
-					face[j](0, g, (face[j](0, g) / face[j](0, 3)));
+					float temp = face[j](0, g) / face[j](0, 3);
+					face[j](0, g, temp);
 					// отбрасывание вершин за пределами отрисовки
 					if (face[j](0, g) > 2 || face[j](0, g) < -2)
 						face[i](0, g, 0);
