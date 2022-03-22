@@ -10,11 +10,11 @@ class Object3D {
 private:
 	std::vector <Matrix<float>> vertexes_;
 	std::vector <std::vector<int>> faces_;
+	std::vector <COLORREF> colors_faces_ = { 0x00a5ff };
+	int line_width_ = 2;
 
 
 public:
-	COLORREF color_faces_ = 0x00a5ff;
-
 	Object3D() {
 		std::vector <std::vector<float>> cube({
 			{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}, 
@@ -81,7 +81,7 @@ public:
 				face[j] = vertexes_[faces_[i][j]];
 				// перенос вершин объекта в пространство камеры + перенос вершин в пространство отсечения
 				face[j] = face[j] * camera.cameraMatrix() * camera.projectionMatrix();
-				for (size_t g = 0; g < 4; g++) {
+				for (int g = 0; g < 4; g++) {
 					// нормализация вершин
 					float temp = face[j](0, g) / face[j](0, 3);
 					face[j](0, g, temp);
@@ -93,7 +93,7 @@ public:
 				face[j] = face[j] * camera.toScreenMatrix();
 			}
 			HPEN hPen;
-			hPen = CreatePen(PS_DASHDOT, 2, color_faces_);
+			hPen = CreatePen(PS_DASHDOT, line_width_, colors_faces_.size() == 1 ? colors_faces_[0] : colors_faces_[i]);
 			SelectObject(hdc, hPen);
 			MoveToEx(hdc, (int)round(face[0](0, 0)), (int)round(face[0](0, 1)), NULL);
 			for (size_t i = 1; i < face.size(); i++)
@@ -101,6 +101,10 @@ public:
 			LineTo(hdc, (int)round(face[0](0, 0)), (int)round(face[0](0, 1)));
 			DeleteObject(hPen);
 		}
+	}
+	void setLineWidthAndColorsFaces(int width, std::vector <COLORREF> colors) {
+		line_width_ = width;
+		colors_faces_ = colors;
 	}
 
 	void translate(float Tx, float Ty, float Tz) {
@@ -117,5 +121,11 @@ public:
 	}
 
 	~Object3D() { }
+};
+
+class Axes : public Object3D {
+	Axes() : Object3D({ {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} }, { {0, 1}, {0, 2}, {0, 3} }) {
+		setLineWidthAndColorsFaces(4, { 0xff0000, 0x00ff00, 0x0000ff });
+	}
 };
 #endif OBJECT3D_H

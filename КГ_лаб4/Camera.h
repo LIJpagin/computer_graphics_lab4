@@ -60,10 +60,6 @@ public:
         return to_screen_matrix;
     }
 
-    void movement() {
-        rotate(0, -0.5f, 0);
-        translate(0, 0.1f, 0);
-    }
     void translate(float Tx, float Ty, float Tz) {
         position_ = position_ + forward_ * Tx;
         position_ = position_ + right_ * Ty;

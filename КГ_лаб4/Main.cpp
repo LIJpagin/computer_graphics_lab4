@@ -1,73 +1,103 @@
 #include "Camera.h"
 #include "Object3D.h"
 #include <chrono>
-#include <iostream>
+#include <tchar.h>
 
 class Scene {
 private:
-	std::vector <Camera> cameras_;
-	std::vector <Object3D> objects_;
-	int action_object_ = 0, action_camera_ = 0;
+	bool show_help_ = false;
 
 public:
+	std::vector <Camera> cameras;
+	std::vector <Object3D> objects;
+	int action_object = 0, action_camera = 0;
 	int WidthWndClass = 1600, HeightWndClass = 800;
+	long delta_time = 0;
+	bool left_button_pressed = false;
+	long delta_wheel = 0;
 
 	void createObjects() {
-		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 10 });
-		Camera camera2(WidthWndClass, HeightWndClass, { 0, 0, 10 });
-		cameras_.push_back(camera1);
-		cameras_.push_back(camera2);
+		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 5 });
+		cameras.push_back(camera1);
 		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\cube.obj");
-		Object3D object2("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\ball.obj");
-		//objects_.push_back(object1);
-		objects_.push_back(object2);
+		objects.push_back(object1);
 	}
 	void show(HDC hdc) {
-		for (size_t i = 0; i < objects_.size(); i++)
-			objects_[i].draw(cameras_[action_camera_], hdc);
-	}
-	void control(WPARAM key) {
-		float translate_speed = 0.05f;
-		float rotate_speed = 0.5f;
-		float scale_speed = 0.01f;
-		if (GetKeyState(VK_SHIFT) & 0x8000) {
-			if (key == int('E')) objects_[action_object_].rotate(0, 0, rotate_speed);
-			if (key == int('Q')) objects_[action_object_].rotate(0, 0, -rotate_speed);
-			if (key == int('W')) objects_[action_object_].rotate(rotate_speed, 0, 0);
-			if (key == int('S')) objects_[action_object_].rotate(-rotate_speed, 0, 0);
-			if (key == int('D')) objects_[action_object_].rotate(0, rotate_speed, 0);
-			if (key == int('A')) objects_[action_object_].rotate(0, -rotate_speed, 0);
-		}
-		else if (GetKeyState(VK_CONTROL) & 0x8000) {
-			if (key == int('E')) objects_[action_object_].scale(1, 1, 1 + scale_speed);
-			if (key == int('Q')) objects_[action_object_].scale(1, 1, 1 - scale_speed);
-			if (key == int('W')) objects_[action_object_].scale(1 + scale_speed, 1, 1);
-			if (key == int('S')) objects_[action_object_].scale(1 - scale_speed, 1, 1);
-			if (key == int('D')) objects_[action_object_].scale(1, 1 + scale_speed, 1);
-			if (key == int('A')) objects_[action_object_].scale(1, 1 - scale_speed, 1);
+		Axes axes;
+		axes.draw(cameras[action_camera], hdc);
+		for (size_t i = 0; i < objects.size(); i++)
+			objects[i].draw(cameras[action_camera], hdc);
+
+		if (show_help_) {
+			TextOut(hdc, 10, 10, L"Управление камерами", 19);
+			TextOut(hdc, 10, 26, L"клавиши numpad - перемещение", 28);
+			TextOut(hdc, 10, 42, L"стрелки - вращение", 18);
+			TextOut(hdc, 10, 58, L"C - смена камеры", 16);
+			TextOut(hdc, 10, 90, L"Управление объектами", 20);
+			TextOut(hdc, 10, 106, L"W,A,S,D,Q,E - перемещение", 25);
+			TextOut(hdc, 10, 122, L"SHIFT + W,A,S,D,Q,E - вращение", 30);
+			TextOut(hdc, 10, 138, L"CTRL + W,A,S,D,Q,E - масштабирование", 36);
+			TextOut(hdc, 10, 154, L"O - смена объекта", 17);
 		}
 		else {
-			if (key == int('O')) action_object_ == objects_.size() - 1 ? action_object_ = 0 : action_object_++;
-			if (key == int('C')) action_camera_ == cameras_.size() - 1 ? action_camera_ = 0 : action_camera_++;
-
-			if (key == int('E')) objects_[action_object_].translate(0, 0, translate_speed);
-			if (key == int('Q')) objects_[action_object_].translate(0, 0, -translate_speed);
-			if (key == int('W')) objects_[action_object_].translate(translate_speed, 0, 0);
-			if (key == int('S')) objects_[action_object_].translate(-translate_speed, 0, 0);
-			if (key == int('D')) objects_[action_object_].translate(0, translate_speed, 0);
-			if (key == int('A')) objects_[action_object_].translate(0, -translate_speed, 0);
+			TCHAR buffer[20];
+			_stprintf_s(buffer, _T("%d ms"), delta_time);
+			TextOut(hdc, 10, 10, buffer, _tcslen(buffer));
 		}
-		if (key == 105) cameras_[action_camera_].translate(0, 0, translate_speed);
-		if (key == 103) cameras_[action_camera_].translate(0, 0, -translate_speed);
-		if (key == 101) cameras_[action_camera_].translate(translate_speed, 0, 0);
-		if (key == 104) cameras_[action_camera_].translate(-translate_speed, 0, 0);
-		if (key == 100) cameras_[action_camera_].translate(0, translate_speed, 0);
-		if (key == 102) cameras_[action_camera_].translate(0, -translate_speed, 0);
+		if (scene.left_button_pressed) {
+			HPEN hPen;
+			hPen = CreatePen(PS_DASHDOT, 2, 0xFFFFFF);
+			SelectObject(hdc, hPen);
+			MoveToEx(hdc, WidthWndClass / 2 - 10, HeightWndClass / 2, NULL);
+			LineTo(hdc, WidthWndClass / 2 + 10, HeightWndClass / 2);
+			MoveToEx(hdc, WidthWndClass / 2, HeightWndClass / 2 - 10, NULL);
+			LineTo(hdc, WidthWndClass / 2, HeightWndClass / 2 + 10);
+			DeleteObject(hPen);
+		}
+	}
+	void control(WPARAM key) {
+		float translate_speed = 0.0005f * delta_time;
+		float rotate_speed = 0.015f * delta_time;
+		float scale_speed = 0.0005f * delta_time;
+		if (GetKeyState(VK_SHIFT) & 0x8000) {
+			if (key == int('E')) objects[action_object].rotate(0, 0, rotate_speed);
+			if (key == int('Q')) objects[action_object].rotate(0, 0, -rotate_speed);
+			if (key == int('W')) objects[action_object].rotate(rotate_speed, 0, 0);
+			if (key == int('S')) objects[action_object].rotate(-rotate_speed, 0, 0);
+			if (key == int('D')) objects[action_object].rotate(0, rotate_speed, 0);
+			if (key == int('A')) objects[action_object].rotate(0, -rotate_speed, 0);
+		}
+		else if (GetKeyState(VK_CONTROL) & 0x8000) {
+			if (key == int('E')) objects[action_object].scale(1, 1, 1 + scale_speed);
+			if (key == int('Q')) objects[action_object].scale(1, 1, 1 - scale_speed);
+			if (key == int('W')) objects[action_object].scale(1 + scale_speed, 1, 1);
+			if (key == int('S')) objects[action_object].scale(1 - scale_speed, 1, 1);
+			if (key == int('D')) objects[action_object].scale(1, 1 + scale_speed, 1);
+			if (key == int('A')) objects[action_object].scale(1, 1 - scale_speed, 1);
+		}
+		else {
+			if (key == int('E')) objects[action_object].translate(0, 0, translate_speed);
+			if (key == int('Q')) objects[action_object].translate(0, 0, -translate_speed);
+			if (key == int('W')) objects[action_object].translate(translate_speed, 0, 0);
+			if (key == int('S')) objects[action_object].translate(-translate_speed, 0, 0);
+			if (key == int('D')) objects[action_object].translate(0, translate_speed, 0);
+			if (key == int('A')) objects[action_object].translate(0, -translate_speed, 0);
+		}
+		if (key == 105) cameras[action_camera].translate(0, 0, translate_speed);
+		if (key == 103) cameras[action_camera].translate(0, 0, -translate_speed);
+		if (key == 101) cameras[action_camera].translate(translate_speed, 0, 0);
+		if (key == 104) cameras[action_camera].translate(-translate_speed, 0, 0);
+		if (key == 100) cameras[action_camera].translate(0, translate_speed, 0);
+		if (key == 102) cameras[action_camera].translate(0, -translate_speed, 0);
 
-		if (key == 39) cameras_[action_camera_].rotate(0, rotate_speed, 0);
-		if (key == 37) cameras_[action_camera_].rotate(0, -rotate_speed, 0);
-		if (key == 40) cameras_[action_camera_].rotate(rotate_speed, 0, 0);
-		if (key == 38) cameras_[action_camera_].rotate(-rotate_speed, 0, 0);
+		if (key == 39) cameras[action_camera].rotate(0, rotate_speed, 0);
+		if (key == 37) cameras[action_camera].rotate(0, -rotate_speed, 0);
+		if (key == 40) cameras[action_camera].rotate(rotate_speed, 0, 0);
+		if (key == 38) cameras[action_camera].rotate(-rotate_speed, 0, 0);
+
+		if (key == int('O')) action_object == objects.size() - 1 ? action_object = 0 : action_object++;
+		if (key == int('C')) action_camera == cameras.size() - 1 ? action_camera = 0 : action_camera++;
+		if (key == 112) show_help_ = !show_help_;
 	}
 	void movement() {
 
@@ -81,6 +111,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 	switch (messg) {
 
 	case WM_PAINT: {
+		auto begin = std::chrono::high_resolution_clock::now();
+
 		GetClientRect(hWnd, &Rect);
 		hdc = BeginPaint(hWnd, &ps);
 
@@ -111,10 +143,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 		hCmpDC = NULL;
 
 		EndPaint(hWnd, &ps);
+
+		auto end = std::chrono::high_resolution_clock::now();
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+		scene.delta_time = (long)elapsed.count();
 	} break;
 
 	case WM_ERASEBKGND:
 		return 1;
+		break;
+
+	case WM_LBUTTONDOWN:
+		scene.left_button_pressed = !scene.left_button_pressed;
+		scene.left_button_pressed ? ShowCursor(false) : ShowCursor(true);
+		SetCursorPos(scene.WidthWndClass / 2, scene.HeightWndClass / 2);
+		break;
+	case WM_MOUSEWHEEL:
+		if (!scene.left_button_pressed)
+			break;
+			scene.delta_wheel += GET_WHEEL_DELTA_WPARAM(wParam);
+			for (; scene.delta_wheel > WHEEL_DELTA; scene.delta_wheel -= WHEEL_DELTA)
+				scene.cameras[scene.action_camera].translate(-0.5, 0, 0);
+			for (; scene.delta_wheel < 0; scene.delta_wheel += WHEEL_DELTA)
+				scene.cameras[scene.action_camera].translate(0.5, 0, 0);
+		break;
+	case WM_MOUSEMOVE:
+		if (!scene.left_button_pressed)
+			break;
+		POINT position;
+		GetCursorPos(&position);
+		scene.cameras[scene.action_camera].rotate(
+			(position.y - scene.HeightWndClass / 2) * 0.0002f * scene.delta_time,
+			(position.x - scene.WidthWndClass / 2) * 0.0002f * scene.delta_time, 0);
+		SetCursorPos(scene.WidthWndClass / 2, scene.HeightWndClass / 2);
 		break;
 
 	case WM_KEYDOWN:
@@ -146,7 +207,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	WndClass.cbWndExtra = 0;
 	WndClass.hInstance = hInstance;
 	WndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	WndClass.hCursor = LoadCursor(NULL, IDC_CROSS);
+	WndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	WndClass.lpszMenuName = NULL;
 	WndClass.lpszClassName = L"CG_WAPI_Template";
@@ -185,5 +246,5 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		TranslateMessage(&lpMsg);
 		DispatchMessage(&lpMsg);
 	}
-	return lpMsg.wParam;
+	return (int)lpMsg.wParam;
 }

@@ -21,7 +21,7 @@ public:
         matrix_ = that.matrix_;
     }
     Matrix(std::vector <std::vector<Type>> matrix) {
-        row_ = matrix.size(), col_ = matrix[0].size();
+        row_ = (int)matrix.size(), col_ = (int)matrix[0].size();
         matrix_ = matrix;
     }
 
@@ -82,7 +82,7 @@ public:
     }
     Matrix operator= (std::vector <std::vector<Type>> matrix) {
         matrix_.clear();
-        row_ = matrix.size(), col_ = matrix[0].size();
+        row_ = (int)matrix.size(), col_ = (int)matrix[0].size();
         matrix_ = matrix;
         return *this;
     }
