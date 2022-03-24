@@ -10,6 +10,7 @@ private:
 public:
 	std::vector <Camera> cameras;
 	std::vector <Object3D> objects;
+	Axes axes;
 	int action_object = 0, action_camera = 0;
 	int WidthWndClass = 1600, HeightWndClass = 800;
 	long delta_time = 0;
@@ -17,17 +18,19 @@ public:
 	long delta_wheel = 0;
 
 	void createObjects() {
-		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 5 });
+		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 10 });
 		cameras.push_back(camera1);
-		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\cube.obj");
+		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\ball.obj");
+		//Object3D object1;
 		objects.push_back(object1);
 	}
 	void show(HDC hdc) {
-		Axes axes;
 		axes.draw(cameras[action_camera], hdc);
 		for (size_t i = 0; i < objects.size(); i++)
 			objects[i].draw(cameras[action_camera], hdc);
 
+		SetBkColor(hdc, 0x202020);
+		SetTextColor(hdc, 0xffffff);
 		if (show_help_) {
 			TextOut(hdc, 10, 10, L"Управление камерами", 19);
 			TextOut(hdc, 10, 26, L"клавиши numpad - перемещение", 28);
@@ -44,7 +47,7 @@ public:
 			_stprintf_s(buffer, _T("%d ms"), delta_time);
 			TextOut(hdc, 10, 10, buffer, _tcslen(buffer));
 		}
-		if (scene.left_button_pressed) {
+		if (left_button_pressed) {
 			HPEN hPen;
 			hPen = CreatePen(PS_DASHDOT, 2, 0xFFFFFF);
 			SelectObject(hdc, hPen);
@@ -83,17 +86,12 @@ public:
 			if (key == int('D')) objects[action_object].translate(0, translate_speed, 0);
 			if (key == int('A')) objects[action_object].translate(0, -translate_speed, 0);
 		}
-		if (key == 105) cameras[action_camera].translate(0, 0, translate_speed);
-		if (key == 103) cameras[action_camera].translate(0, 0, -translate_speed);
-		if (key == 101) cameras[action_camera].translate(translate_speed, 0, 0);
-		if (key == 104) cameras[action_camera].translate(-translate_speed, 0, 0);
-		if (key == 100) cameras[action_camera].translate(0, translate_speed, 0);
-		if (key == 102) cameras[action_camera].translate(0, -translate_speed, 0);
-
-		if (key == 39) cameras[action_camera].rotate(0, rotate_speed, 0);
-		if (key == 37) cameras[action_camera].rotate(0, -rotate_speed, 0);
-		if (key == 40) cameras[action_camera].rotate(rotate_speed, 0, 0);
-		if (key == 38) cameras[action_camera].rotate(-rotate_speed, 0, 0);
+		if (key == 105) cameras[action_camera].translate(0, 0, translate_speed * 10);
+		if (key == 103) cameras[action_camera].translate(0, 0, -translate_speed * 10);
+		if (key == 101) cameras[action_camera].translate(translate_speed * 10, 0, 0);
+		if (key == 104) cameras[action_camera].translate(-translate_speed * 10, 0, 0);
+		if (key == 100) cameras[action_camera].translate(0, translate_speed * 10, 0);
+		if (key == 102) cameras[action_camera].translate(0, -translate_speed * 10, 0);
 
 		if (key == int('O')) action_object == objects.size() - 1 ? action_object = 0 : action_object++;
 		if (key == int('C')) action_camera == cameras.size() - 1 ? action_camera = 0 : action_camera++;

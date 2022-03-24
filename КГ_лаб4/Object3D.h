@@ -10,11 +10,11 @@ class Object3D {
 private:
 	std::vector <Matrix<float>> vertexes_;
 	std::vector <std::vector<int>> faces_;
+
+public:
 	std::vector <COLORREF> colors_faces_ = { 0x00a5ff };
 	int line_width_ = 2;
 
-
-public:
 	Object3D() {
 		std::vector <std::vector<float>> cube({
 			{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}, 
@@ -102,10 +102,6 @@ public:
 			DeleteObject(hPen);
 		}
 	}
-	void setLineWidthAndColorsFaces(int width, std::vector <COLORREF> colors) {
-		line_width_ = width;
-		colors_faces_ = colors;
-	}
 
 	void translate(float Tx, float Ty, float Tz) {
 		for (size_t i = 0; i < vertexes_.size(); i++)
@@ -124,8 +120,19 @@ public:
 };
 
 class Axes : public Object3D {
-	Axes() : Object3D({ {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} }, { {0, 1}, {0, 2}, {0, 3} }) {
-		setLineWidthAndColorsFaces(4, { 0xff0000, 0x00ff00, 0x0000ff });
+public:
+	Axes() : Object3D() {
+		float size_face = 1;
+		float size_normal = 0.2f;
+		vertexesAndFaces({
+			{0, 0, 0}, {size_normal, 0, 0}, {0, size_normal, 0}, {0, 0, size_normal},
+			{size_face, 0, size_face}, {-size_face, 0, size_face}, {-size_face, 0, -size_face}, {size_face, 0, -size_face},
+			{size_face, size_face, 0}, {-size_face, size_face, 0}, {-size_face, -size_face, 0}, {size_face, -size_face, 0},
+			{0, size_face, size_face}, {0, -size_face, size_face}, {0, -size_face, -size_face}, {0, size_face, -size_face} },
+			{ {0, 1}, {0, 2}, {0, 3},
+			{4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15} });
+		colors_faces_ = { 0xff0000, 0x00ff00, 0x0000ff, 0x00ff00, 0x0000ff, 0xff0000 };
+		line_width_ = 2;
 	}
 };
 #endif OBJECT3D_H
