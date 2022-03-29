@@ -25,6 +25,15 @@ public:
         matrix_ = matrix;
     }
 
+    Type x() { return matrix_[0][0]; }
+    Type y() { return matrix_[0][1]; }
+    Type z() { return matrix_[0][2]; }
+    Type w() { return matrix_[0].back(); }
+    void x(Type value) { matrix_[0][0] = value; }
+    void y(Type value) { matrix_[0][1] = value; }
+    void z(Type value) { matrix_[0][2] = value; }
+    void w(Type value) { matrix_[0].back() = value; }
+
     Type operator() (int row, int col) {
         if (row < 0 || col < 0 || row > row_ - 1 || col > col_ - 1)
             throw new std::exception("");
@@ -71,6 +80,22 @@ public:
         for (auto row = 0; row < result.row_; row++)
             for (auto col = 0; col < result.col_; col++)
                  result.matrix_[row][col] = left.matrix_[row][col] + right.matrix_[row][col];
+        return result;
+    }
+    friend Matrix <Type> operator/ (const Matrix& left, const Type& value) {
+        Matrix <Type> result(left);
+        for (auto row = 0; row < result.row_; row++)
+            for (auto col = 0; col < result.col_; col++)
+                result.matrix_[row][col] = left.matrix_[row][col] / value;
+        return result;
+    }
+    friend Matrix <Type> operator- (const Matrix& left, const Matrix& right) {
+        if (left.row_ != right.row_ || left.col_ != right.col_)
+            throw new std::exception("");
+        Matrix <Type> result(left.row_, left.col_);
+        for (auto row = 0; row < result.row_; row++)
+            for (auto col = 0; col < result.col_; col++)
+                result.matrix_[row][col] = left.matrix_[row][col] - right.matrix_[row][col];
         return result;
     }
     Matrix operator= (const Matrix& that) {

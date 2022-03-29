@@ -1,5 +1,7 @@
-#include "Camera.h"
 #include "Object3D.h"
+#include "Camera.h"
+#include "Light.h"
+
 #include <chrono>
 #include <tchar.h>
 
@@ -10,27 +12,31 @@ private:
 public:
 	std::vector <Camera> cameras;
 	std::vector <Object3D> objects;
+	std::vector <Light> light_sources;
 	Axes axes;
+
 	int action_object = 0, action_camera = 0;
 	int WidthWndClass = 1600, HeightWndClass = 800;
-	long delta_time = 0;
+	long delta_time = 0, delta_wheel = 0;
 	bool left_button_pressed = false;
-	long delta_wheel = 0;
 
 	void createObjects() {
 		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 10 });
 		cameras.push_back(camera1);
-		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\ball.obj");
+		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\ball2.obj");
 		//Object3D object1;
 		objects.push_back(object1);
+		Light Light1;
+		light_sources.push_back(Light1);
 	}
 	void show(HDC hdc) {
-		axes.draw(cameras[action_camera], hdc);
-		for (size_t i = 0; i < objects.size(); i++)
-			objects[i].draw(cameras[action_camera], hdc);
+		//axes.drawFrame(cameras[action_camera], hdc);
 
-		SetBkColor(hdc, 0x202020);
-		SetTextColor(hdc, 0xffffff);
+		for (auto object : objects)
+			object.drawLambert(cameras[action_camera], light_sources, hdc);
+			//object.drawFill(cameras[action_camera], hdc);
+
+		SetBkColor(hdc, 0x444444);
 		if (show_help_) {
 			TextOut(hdc, 10, 10, L"Управление камерами", 19);
 			TextOut(hdc, 10, 26, L"клавиши numpad - перемещение", 28);
@@ -45,7 +51,7 @@ public:
 		else {
 			TCHAR buffer[20];
 			_stprintf_s(buffer, _T("%d ms"), delta_time);
-			TextOut(hdc, 10, 10, buffer, _tcslen(buffer));
+			TextOut(hdc, 10, 10, buffer, (int)_tcslen(buffer));
 		}
 		if (left_button_pressed) {
 			HPEN hPen;
@@ -59,9 +65,9 @@ public:
 		}
 	}
 	void control(WPARAM key) {
-		float translate_speed = 0.0005f * delta_time;
-		float rotate_speed = 0.015f * delta_time;
-		float scale_speed = 0.0005f * delta_time;
+		float translate_speed = 0.05f;
+		float rotate_speed = 1.5f;
+		float scale_speed = 0.05f;
 		if (GetKeyState(VK_SHIFT) & 0x8000) {
 			if (key == int('E')) objects[action_object].rotate(0, 0, rotate_speed);
 			if (key == int('Q')) objects[action_object].rotate(0, 0, -rotate_speed);
@@ -86,12 +92,12 @@ public:
 			if (key == int('D')) objects[action_object].translate(0, translate_speed, 0);
 			if (key == int('A')) objects[action_object].translate(0, -translate_speed, 0);
 		}
-		if (key == 105) cameras[action_camera].translate(0, 0, translate_speed * 10);
-		if (key == 103) cameras[action_camera].translate(0, 0, -translate_speed * 10);
-		if (key == 101) cameras[action_camera].translate(translate_speed * 10, 0, 0);
-		if (key == 104) cameras[action_camera].translate(-translate_speed * 10, 0, 0);
-		if (key == 100) cameras[action_camera].translate(0, translate_speed * 10, 0);
-		if (key == 102) cameras[action_camera].translate(0, -translate_speed * 10, 0);
+		if (key == 105) cameras[action_camera].translate(0, 0, translate_speed);
+		if (key == 103) cameras[action_camera].translate(0, 0, -translate_speed);
+		if (key == 101) cameras[action_camera].translate(translate_speed, 0, 0);
+		if (key == 104) cameras[action_camera].translate(-translate_speed, 0, 0);
+		if (key == 100) cameras[action_camera].translate(0, translate_speed, 0);
+		if (key == 102) cameras[action_camera].translate(0, -translate_speed, 0);
 
 		if (key == int('O')) action_object == objects.size() - 1 ? action_object = 0 : action_object++;
 		if (key == int('C')) action_camera == cameras.size() - 1 ? action_camera = 0 : action_camera++;
@@ -122,12 +128,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 		// Закраска фоновым цветом
 		LOGBRUSH br;
 		br.lbStyle = BS_SOLID;
-		br.lbColor = 0x202020;
+		br.lbColor = 0x444444;
 		HBRUSH brush;
 		brush = CreateBrushIndirect(&br);
 		FillRect(hCmpDC, &Rect, brush);
 		DeleteObject(brush);
 
+		SetTextColor(hCmpDC, 0xffffff);
 		// Отрисовка
 		scene.show(hCmpDC);
 
@@ -171,8 +178,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 		POINT position;
 		GetCursorPos(&position);
 		scene.cameras[scene.action_camera].rotate(
-			(position.y - scene.HeightWndClass / 2) * 0.0002f * scene.delta_time,
-			(position.x - scene.WidthWndClass / 2) * 0.0002f * scene.delta_time, 0);
+			(position.y - scene.HeightWndClass / 2) * 0.02f,
+			(position.x - scene.WidthWndClass / 2) * 0.02f, 0);
 		SetCursorPos(scene.WidthWndClass / 2, scene.HeightWndClass / 2);
 		break;
 

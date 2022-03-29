@@ -1,9 +1,12 @@
 #pragma once
+
 #include <windows.h>
 #include <vector>
 #include "Matrix.h"
+
 #ifndef CAMERA_H
 #define CAMERA_H
+
 class Camera {
 private:
     Matrix <float> position_, forward_, up_, right_;
@@ -23,6 +26,13 @@ public:
         up_ =        { {0, 1, 0, 1} };
         right_ =     { {1, 0, 0, 1} };
 	}
+
+    int getWidthScreen() {
+        return width_;
+    }
+    int getHeightScreen() {
+        return height_;
+    }
 
     Matrix <float> cameraMatrix() {
         float x = position_(0, 0), y = position_(0, 1), z = position_(0, 2);
@@ -73,4 +83,5 @@ public:
 
 	~Camera() { }
 };
+
 #endif CAMERA_H
