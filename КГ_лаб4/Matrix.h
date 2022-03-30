@@ -1,9 +1,13 @@
 #pragma once
+
 #define PI (float)3.14159
+
 #ifndef MATRIX_H
 #define MATRIX_H
+
 #include <vector>
 #include <iostream>
+
 template <typename Type>
 class Matrix {
 private:

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Matrix.h"
+#include "Object3D.h"
 
 #ifndef LIGHT_H
 #define LIGHT_H
@@ -30,7 +31,7 @@ public:
 	int n = 60;
 
 	Light() {
-		vector_light_ = { {0, 1, -1, 0} };
+		vector_light_ = { {-1, 1, -1, 0} };
 		position_ = { {0, 0, 0, 1} };
 	}
 	Light(std::vector<float> vec, std::vector<float> position) {
@@ -73,6 +74,14 @@ public:
 		if (light_intensity > 255) light_intensity = 255;
 		return light_intensity / 255;
 	}
+	/*void showLightSource(Camera camera, HDC hdc) {
+		Object3D light;
+		light.vertexesAndFaces({ position_,  (position_ + vector_light_) }, { {0, 1} });
+		light.colors_faces_ = { 0xff0000, 0x00ff00, 0x0000ff, 0x00ff00, 0x0000ff, 0xff0000 };
+		light.line_width_ = 2;
+		light.drawFrame(camera, hdc);
+	}*/
+
 	~Light() { }
 };
 #endif LIGHT_H

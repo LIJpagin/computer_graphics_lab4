@@ -16,25 +16,21 @@ public:
 	Axes axes;
 
 	int action_object = 0, action_camera = 0;
-	int WidthWndClass = 1600, HeightWndClass = 800;
+	int WidthWndClass = 1600, HeightWndClass = 900;
 	long delta_time = 0, delta_wheel = 0;
 	bool left_button_pressed = false;
 
 	void createObjects() {
 		Camera camera1(WidthWndClass, HeightWndClass, { 0, 0, 10 });
 		cameras.push_back(camera1);
-		Object3D object1("C:\\Users\\Пользователь\\Desktop\\КГ_лаб4\\ball2.obj");
-		//Object3D object1;
+		Object3D object1;
+		object1.cube();
 		objects.push_back(object1);
-		Light Light1;
-		light_sources.push_back(Light1);
 	}
 	void show(HDC hdc) {
-		//axes.drawFrame(cameras[action_camera], hdc);
-
+		axes.drawFrame(cameras[action_camera], hdc);
 		for (auto object : objects)
-			object.drawLambert(cameras[action_camera], light_sources, hdc);
-			//object.drawFill(cameras[action_camera], hdc);
+			object.drawFrame(cameras[action_camera], hdc);
 
 		SetBkColor(hdc, 0x444444);
 		if (show_help_) {
@@ -227,8 +223,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	hWnd = CreateWindow(
 		L"CG_WAPI_Template", // Имя класса 
 		L"Компьютерная графика лабораторная работа №1", // Текст заголовка
-		WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, // Стиль окна 
-		-12, 0, // Позиция левого верхнего угла 
+		WS_VISIBLE | WS_POPUP | WS_MAXIMIZE, // Стиль окна 
+		CW_USEDEFAULT, CW_USEDEFAULT, // Позиция левого верхнего угла 
 		scene.WidthWndClass, scene.HeightWndClass, // Ширина и высота окна 
 		(HWND)NULL, // Указатель на родительское окно NULL 
 		(HMENU)NULL, // Используется меню класса окна 

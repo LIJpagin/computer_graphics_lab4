@@ -39,12 +39,15 @@ protected:
 				// нормализация вершин
 				face[j](0, g, face[j](0, g) / face[j].w());
 				// отбрасывание вершин за пределами отрисовки
-				if (face[j](0, g) > 1 || face[j](0, g) < -1)
-					face[j](0, g, 0);
+				//if (face[j](0, g) > 1 || face[j](0, g) < -1)
+				//	face[j](0, g, 0);
 			}
 			// преобразование вершин в разрешение экрана
 			face[j] = face[j] * camera.toScreenMatrix();
-			face_into_screen_space[j] = { { (int)round(face[j].x()), (int)round(face[j].y())} };
+			int x = (int)round(face[j].x()), y = (int)round(face[j].y());
+			if (x > 1600 || y > 900 || x < 0 || y < 0)
+				x = 0, y = 0;
+			face_into_screen_space[j] = { {x, y} };
 		}
 		return face_into_screen_space;
 	}
@@ -61,13 +64,29 @@ protected:
 	}
 
 public:
-	std::vector <COLORREF> colors_faces_ = { 0xffff00 };
+	std::vector <COLORREF> colors_faces_ = { 0xA7FC00 };
 	int line_width_ = 2;
 
-	Object3D() {
+	Object3D() { }
+	Object3D(const char* filename) {
+		LoadObjModel(filename);
+	}
+	Object3D(std::vector<std::vector<float>> vertices, std::vector<std::vector<int>> faces) {
+		vertices_.resize(vertices.size());
+		for (size_t i = 0; i < vertices.size(); i++) {
+			vertices[i].push_back(1);
+			vertices_[i] = { vertices[i] };
+		}
+		faces_ = faces;
+	}
+	Object3D(std::vector<Matrix<float>> vertices, std::vector<std::vector<int>> faces) {
+		vertices_ = vertices, faces_ = faces;
+	}
+
+	void cube() {
 		std::vector <std::vector<float>> cube({
 			{-0.5f, -0.5f, 0.5f}, {0.5f, -0.5f, 0.5f},
-			{-0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 
+			{-0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f},
 			{-0.5f, 0.5f, -0.5f}, {0.5f, 0.5f, -0.5f},
 			{-0.5f, -0.5f, -0.5f}, {0.5f, -0.5f, -0.5f}
 			});
@@ -78,23 +97,11 @@ public:
 		}
 		faces_ = {
 			{0, 1, 3, 2}, {2, 3, 5, 4},
-			{4, 5, 7, 6}, {6, 7, 1, 0}, 
+			{4, 5, 7, 6}, {6, 7, 1, 0},
 			{1, 7, 5, 3}, {6, 0, 2, 4}, };
 		colors_faces_ = { 0xff0000, 0x00ff00, 0x0000ff, 0x00ffff, 0xffff00, 0xff00ff };
 		normals_.resize(faces_.size());
 	}
-	Object3D(const char* filename) {
-		LoadObjModel(filename);
-	}
-	Object3D(std::vector<std::vector<float>> vertexes, std::vector<std::vector<int>> faces) {
-		vertices_.resize(vertexes.size());
-		for (size_t i = 0; i < vertexes.size(); i++) {
-			vertexes[i].push_back(1);
-			vertices_[i] = { vertexes[i] };
-		}
-		faces_ = faces;
-	}
-
 	void vertexesAndFaces(std::vector<std::vector<float>> vertexes, std::vector<std::vector<int>> faces) {
 		vertices_.clear(), faces_.clear();
 		vertices_.resize(vertexes.size());
@@ -102,6 +109,11 @@ public:
 			vertexes[i].push_back(1);
 			vertices_[i] = { vertexes[i] };
 		}
+		faces_ = faces;
+	}
+	void vertexesAndFaces(std::vector<Matrix<float>> vertexes, std::vector<std::vector<int>> faces) {
+		vertices_.clear(), faces_.clear();
+		vertices_ = vertices_ = vertexes;
 		faces_ = faces;
 	}
 	void LoadObjModel(const char* filename) {
@@ -131,6 +143,43 @@ public:
 		normals_.resize(faces_.size());
 	}
 
+	void drawLambertPolygonFill(Camera camera, std::vector<Light> light_sources, HDC hdc) {
+		for (size_t i = 0; i < faces_.size(); i++) {
+
+			std::vector<Matrix<float>> face(faces_[i].size());
+			for (size_t j = 0; j < face.size(); j++)
+				face[j] = vertices_[faces_[i][j]];
+
+			std::vector<Matrix<int>> face_into_screen_space
+				= translatingFaceIntoScreenSpace(camera, face);
+
+			normals_[i] = calculateNormal(face);
+
+			if (!robertsAlgorithm(face_into_screen_space)) continue;
+
+			float intensity = 0;
+			for (auto light_itr : light_sources)
+				intensity += light_itr.faceLightIntensity(normals_[i], face);
+			if (intensity > 1) intensity = 1;
+
+			COLORREF color = colors_faces_.size() == 1 ? colors_faces_[0] : colors_faces_[i];
+			color = RGB(intensity * GetRValue(color), intensity * GetGValue(color),
+				intensity * GetBValue(color));
+
+			POINT* face_into_POINT = new POINT[face_into_screen_space.size()];
+			for (size_t i = 0; i < face_into_screen_space.size(); i++)
+				face_into_POINT[i] = { face_into_screen_space[i].x(), face_into_screen_space[i].y() };
+
+			HBRUSH hBrush = CreateSolidBrush(color);
+			HPEN hPen = CreatePen(PS_DASHDOT, 1, color);
+			SetBkColor(hdc, color);
+			SelectObject(hdc, hBrush);
+			SelectObject(hdc, hPen);
+			Polygon(hdc, face_into_POINT, face_into_screen_space.size());
+			DeleteObject(hBrush);
+			DeleteObject(hPen);
+		}
+	}
 	void drawLambert(Camera camera, std::vector<Light> light_sources, HDC hdc) {
 		for (size_t i = 0; i < faces_.size(); i++) {
 
@@ -190,34 +239,42 @@ public:
 	void drawFrame(Camera camera, HDC hdc) {
 		for (size_t i = 0; i < faces_.size(); i++) {
 			std::vector<Matrix<float>> face(faces_[i].size());
-			for (size_t j = 0; j < face.size(); j++) {
+			for (size_t j = 0; j < face.size(); j++)
 				face[j] = vertices_[faces_[i][j]];
-				// перенос вершин объекта в пространство камеры + перенос вершин в пространство отсечения
-				face[j] = face[j] * camera.cameraMatrix() * camera.projectionMatrix();
-				for (int g = 0; g < 4; g++) {
-					// нормализация вершин
-					face[j](0, g, face[j](0, g) / face[j].w());
-					// отбрасывание вершин за пределами отрисовки
-					if (face[j](0, g) > 2 || face[j](0, g) < -2)
-						face[j](0, g, -1);
-				}
-				// преобразование вершин в разрешение экрана
-				face[j] = face[j] * camera.toScreenMatrix();
-				face[j](0, 0, round(face[j].x()));
-				face[j](0, 1, round(face[j].y()));
-			}
+
+			std::vector<Matrix<int>> face_into_screen_space = translatingFaceIntoScreenSpace(camera, face);
+
 			HPEN hPen;
-			hPen = CreatePen(PS_DASHDOT, line_width_,
-				colors_faces_.size() == 1 ? colors_faces_[0] : colors_faces_[i]);
+			SetBkColor(hdc, colors_faces_.size() == 1 ? colors_faces_[0] : colors_faces_[i]);
+			hPen = CreatePen(PS_DASHDOT, 1, colors_faces_.size() == 1 ? colors_faces_[0] : colors_faces_[i]);
 			SelectObject(hdc, hPen);
-			for (size_t j = 0; j < face.size(); j++) {
-				size_t g = j == face.size() - 1 ? 0 : j + 1;
-				if (face[j].x() <= -camera.getWidthScreen() || face[j].y() >= camera.getHeightScreen() * 2||
-					face[g].x() <= -camera.getWidthScreen() || face[g].y() >= camera.getHeightScreen() * 2)
+			for (size_t j = 0; j < face_into_screen_space.size(); j++) {
+				size_t g = j == face_into_screen_space.size() - 1 ? 0 : j + 1;
+				if (face_into_screen_space[j].x() <= 0 || face_into_screen_space[j].y() >= camera.getHeightScreen() ||
+					face_into_screen_space[g].x() <= 0 || face_into_screen_space[g].y() >= camera.getHeightScreen())
 					continue;
-				MoveToEx(hdc, (int)face[j].x(), (int)face[j].y(), NULL);
-				LineTo(hdc, (int)face[g].x(), (int)face[g].y());
+				MoveToEx(hdc, face_into_screen_space[j].x(), face_into_screen_space[j].y(), NULL);
+				LineTo(hdc, face_into_screen_space[g].x(), face_into_screen_space[g].y());
 			}
+			DeleteObject(hPen);
+		}
+	}
+	void drawVertices(Camera camera, HDC hdc) {
+		for (size_t i = 0; i < faces_.size(); i++) {
+			std::vector<Matrix<float>> face(faces_[i].size());
+			for (size_t j = 0; j < face.size(); j++)
+				face[j] = vertices_[faces_[i][j]];
+
+			std::vector<Matrix<int>> face_into_screen_space
+				= translatingFaceIntoScreenSpace(camera, face);
+
+			HPEN hPen;
+			COLORREF color = colors_faces_.size() == 1 ? colors_faces_[0] : colors_faces_[i];
+			SetBkColor(hdc, color);
+			hPen = CreatePen(PS_DASHDOT, 1, color);
+			SelectObject(hdc, hPen);
+			for (auto face_itr : face_into_screen_space)
+				SetPixel(hdc, face_itr.x(), face_itr.y(), color);
 			DeleteObject(hPen);
 		}
 	}

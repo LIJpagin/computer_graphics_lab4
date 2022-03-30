@@ -11,12 +11,14 @@ void Fill::fillLines(HDC hdc, std::vector<Matrix<int>> points, COLORREF color) {
 			Edge* p1 = active->next, * p2;
 			while (p1) {
 				p2 = p1->next;
-				HPEN hPen;
-				hPen = CreatePen(PS_DASHDOT, 1, color);
-				SelectObject(hdc, hPen);
-				MoveToEx(hdc, (int)p1->xIntersect, scan, nullptr);
-				LineTo(hdc, (int)p2->xIntersect, scan);
-				DeleteObject(hPen);
+				if (p1->xIntersect > 1 && p2->xIntersect > 1) {
+					HPEN hPen;
+					hPen = CreatePen(PS_DASHDOT, 1, color);
+					SelectObject(hdc, hPen);
+					MoveToEx(hdc, (int)p1->xIntersect, scan, nullptr);
+					LineTo(hdc, (int)p2->xIntersect, scan);
+					DeleteObject(hPen);
+				}
 				p1 = p2->next;
 			}
 			updateActiveList(scan, active);

@@ -147,8 +147,8 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Matrix.h" />
-    <ClInclude Include="Object3D.h" />
     <ClInclude Include="Fill.h" />
+    <ClInclude Include="Object3D.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
